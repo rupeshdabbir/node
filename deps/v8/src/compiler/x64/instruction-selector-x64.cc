@@ -597,9 +597,9 @@ static void VisitBinop(InstructionSelector* selector, Node* node,
 void InstructionSelector::VisitWord32And(Node* node) {
   X64OperandGenerator g(this);
   Uint32BinopMatcher m(node);
-  if (m.right().Is(0xff)) {
+  if (m.right().Is(0xFF)) {
     Emit(kX64Movzxbl, g.DefineAsRegister(node), g.Use(m.left().node()));
-  } else if (m.right().Is(0xffff)) {
+  } else if (m.right().Is(0xFFFF)) {
     Emit(kX64Movzxwl, g.DefineAsRegister(node), g.Use(m.left().node()));
   } else {
     VisitBinop(this, node, kX64And32);
@@ -1242,13 +1242,13 @@ bool ZeroExtendsWord32ToWord64(Node* node) {
       }
     }
     case IrOpcode::kLoad: {
-      // The movzxbl/movsxbl/movzxwl/movsxwl operations implicitly zero-extend
-      // to 64-bit on x64,
-      // so the zero-extension is a no-op.
+      // The movzxbl/movsxbl/movzxwl/movsxwl/movl operations implicitly
+      // zero-extend to 64-bit on x64, so the zero-extension is a no-op.
       LoadRepresentation load_rep = LoadRepresentationOf(node->op());
       switch (load_rep.representation()) {
         case MachineRepresentation::kWord8:
         case MachineRepresentation::kWord16:
+        case MachineRepresentation::kWord32:
           return true;
         default:
           return false;

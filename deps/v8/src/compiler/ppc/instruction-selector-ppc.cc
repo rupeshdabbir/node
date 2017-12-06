@@ -509,7 +509,7 @@ static void VisitLogical(InstructionSelector* selector, Node* node, Matcher* m,
 
 
 static inline bool IsContiguousMask32(uint32_t value, int* mb, int* me) {
-  int mask_width = base::bits::CountPopulation32(value);
+  int mask_width = base::bits::CountPopulation(value);
   int mask_msb = base::bits::CountLeadingZeros32(value);
   int mask_lsb = base::bits::CountTrailingZeros32(value);
   if ((mask_width == 0) || (mask_msb + mask_width + mask_lsb != 32))
@@ -522,7 +522,7 @@ static inline bool IsContiguousMask32(uint32_t value, int* mb, int* me) {
 
 #if V8_TARGET_ARCH_PPC64
 static inline bool IsContiguousMask64(uint64_t value, int* mb, int* me) {
-  int mask_width = base::bits::CountPopulation64(value);
+  int mask_width = base::bits::CountPopulation(value);
   int mask_msb = base::bits::CountLeadingZeros64(value);
   int mask_lsb = base::bits::CountTrailingZeros64(value);
   if ((mask_width == 0) || (mask_msb + mask_width + mask_lsb != 64))
@@ -553,7 +553,7 @@ void InstructionSelector::VisitWord32And(Node* node) {
         if (m.left().IsWord32Shr()) {
           // Adjust the mask such that it doesn't include any rotated bits.
           if (mb > 31 - sh) mb = 31 - sh;
-          sh = (32 - sh) & 0x1f;
+          sh = (32 - sh) & 0x1F;
         } else {
           // Adjust the mask such that it doesn't include any rotated bits.
           if (me < sh) me = sh;
@@ -592,7 +592,7 @@ void InstructionSelector::VisitWord64And(Node* node) {
         if (m.left().IsWord64Shr()) {
           // Adjust the mask such that it doesn't include any rotated bits.
           if (mb > 63 - sh) mb = 63 - sh;
-          sh = (64 - sh) & 0x3f;
+          sh = (64 - sh) & 0x3F;
         } else {
           // Adjust the mask such that it doesn't include any rotated bits.
           if (me < sh) me = sh;
@@ -756,7 +756,7 @@ void InstructionSelector::VisitWord32Shr(Node* node) {
         IsContiguousMask32((uint32_t)(mleft.right().Value()) >> sh, &mb, &me)) {
       // Adjust the mask such that it doesn't include any rotated bits.
       if (mb > 31 - sh) mb = 31 - sh;
-      sh = (32 - sh) & 0x1f;
+      sh = (32 - sh) & 0x1F;
       if (mb >= me) {
         Emit(kPPC_RotLeftAndMask32, g.DefineAsRegister(node),
              g.UseRegister(mleft.left().node()), g.TempImmediate(sh),
@@ -782,7 +782,7 @@ void InstructionSelector::VisitWord64Shr(Node* node) {
         IsContiguousMask64((uint64_t)(mleft.right().Value()) >> sh, &mb, &me)) {
       // Adjust the mask such that it doesn't include any rotated bits.
       if (mb > 63 - sh) mb = 63 - sh;
-      sh = (64 - sh) & 0x3f;
+      sh = (64 - sh) & 0x3F;
       if (mb >= me) {
         bool match = false;
         ArchOpcode opcode;
@@ -1995,21 +1995,10 @@ void InstructionSelector::EmitPrepareArguments(
     }
   } else {
     // Push any stack arguments.
-    int num_slots = static_cast<int>(descriptor->StackParameterCount());
-    int slot = 0;
-    for (PushParameter input : (*arguments)) {
-      if (slot == 0) {
-        DCHECK(input.node());
-        Emit(kPPC_PushFrame, g.NoOutput(), g.UseRegister(input.node()),
-             g.TempImmediate(num_slots));
-      } else {
-        // Skip any alignment holes in pushed nodes.
-        if (input.node()) {
-          Emit(kPPC_StoreToStackSlot, g.NoOutput(), g.UseRegister(input.node()),
-               g.TempImmediate(slot));
-        }
-      }
-      ++slot;
+    for (PushParameter input : base::Reversed(*arguments)) {
+      // Skip any alignment holes in pushed nodes.
+      if (input.node() == nullptr) continue;
+      Emit(kPPC_Push, g.NoOutput(), g.UseRegister(input.node()));
     }
   }
 }
@@ -2187,7 +2176,7 @@ InstructionSelector::SupportedMachineOperatorFlags() {
          MachineOperatorBuilder::kFloat64RoundTiesAway |
          MachineOperatorBuilder::kWord32Popcnt |
          MachineOperatorBuilder::kWord64Popcnt;
-  // We omit kWord32ShiftIsSafe as s[rl]w use 0x3f as a mask rather than 0x1f.
+  // We omit kWord32ShiftIsSafe as s[rl]w use 0x3F as a mask rather than 0x1F.
 }
 
 // static

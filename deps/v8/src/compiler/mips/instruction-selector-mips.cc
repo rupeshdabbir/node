@@ -36,7 +36,7 @@ class MipsOperandGenerator final : public OperandGenerator {
   InstructionOperand UseRegisterOrImmediateZero(Node* node) {
     if ((IsIntegerConstant(node) && (GetIntegerConstantValue(node) == 0)) ||
         (IsFloatConstant(node) &&
-         (bit_cast<int64_t>(GetFloatConstantValue(node)) == V8_INT64_C(0)))) {
+         (bit_cast<int64_t>(GetFloatConstantValue(node)) == 0))) {
       return UseImmediate(node);
     }
     return UseRegister(node);
@@ -421,7 +421,7 @@ void InstructionSelector::VisitWord32And(Node* node) {
   if (m.left().IsWord32Shr() && CanCover(node, m.left().node()) &&
       m.right().HasValue()) {
     uint32_t mask = m.right().Value();
-    uint32_t mask_width = base::bits::CountPopulation32(mask);
+    uint32_t mask_width = base::bits::CountPopulation(mask);
     uint32_t mask_msb = base::bits::CountLeadingZeros32(mask);
     if ((mask_width != 0) && (mask_msb + mask_width == 32)) {
       // The mask must be contiguous, and occupy the least-significant bits.
@@ -432,7 +432,7 @@ void InstructionSelector::VisitWord32And(Node* node) {
       Int32BinopMatcher mleft(m.left().node());
       if (mleft.right().HasValue()) {
         // Any shift value can match; int32 shifts use `value % 32`.
-        uint32_t lsb = mleft.right().Value() & 0x1f;
+        uint32_t lsb = mleft.right().Value() & 0x1F;
 
         // Ext cannot extract bits past the register size, however since
         // shifting the original value would have introduced some zeros we can
@@ -454,7 +454,7 @@ void InstructionSelector::VisitWord32And(Node* node) {
   }
   if (m.right().HasValue()) {
     uint32_t mask = m.right().Value();
-    uint32_t shift = base::bits::CountPopulation32(~mask);
+    uint32_t shift = base::bits::CountPopulation(~mask);
     uint32_t msb = base::bits::CountLeadingZeros32(~mask);
     if (shift != 0 && shift != 32 && msb + shift == 32) {
       // Insert zeros for (x >> K) << K => x & ~(2^K - 1) expression reduction
@@ -507,7 +507,7 @@ void InstructionSelector::VisitWord32Shl(Node* node) {
     // contiguous, and the shift immediate non-zero.
     if (mleft.right().HasValue()) {
       uint32_t mask = mleft.right().Value();
-      uint32_t mask_width = base::bits::CountPopulation32(mask);
+      uint32_t mask_width = base::bits::CountPopulation(mask);
       uint32_t mask_msb = base::bits::CountLeadingZeros32(mask);
       if ((mask_width != 0) && (mask_msb + mask_width == 32)) {
         uint32_t shift = m.right().Value();
@@ -531,13 +531,13 @@ void InstructionSelector::VisitWord32Shl(Node* node) {
 void InstructionSelector::VisitWord32Shr(Node* node) {
   Int32BinopMatcher m(node);
   if (m.left().IsWord32And() && m.right().HasValue()) {
-    uint32_t lsb = m.right().Value() & 0x1f;
+    uint32_t lsb = m.right().Value() & 0x1F;
     Int32BinopMatcher mleft(m.left().node());
     if (mleft.right().HasValue() && mleft.right().Value() != 0) {
       // Select Ext for Shr(And(x, mask), imm) where the result of the mask is
       // shifted into the least-significant bits.
       uint32_t mask = (mleft.right().Value() >> lsb) << lsb;
-      unsigned mask_width = base::bits::CountPopulation32(mask);
+      unsigned mask_width = base::bits::CountPopulation(mask);
       unsigned mask_msb = base::bits::CountLeadingZeros32(mask);
       if ((mask_msb + mask_width + lsb) == 32) {
         MipsOperandGenerator g(this);

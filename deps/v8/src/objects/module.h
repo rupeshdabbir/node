@@ -6,6 +6,7 @@
 #define V8_OBJECTS_MODULE_H_
 
 #include "src/objects.h"
+#include "src/objects/fixed-array.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
@@ -78,6 +79,11 @@ class Module : public Struct {
   // [script]: Script from which the module originates.
   DECL_ACCESSORS(script, Script)
 
+  // The value of import.meta inside of this module.
+  // Lazily initialized on first access. It's the hole before first access and
+  // a JSObject afterwards.
+  DECL_ACCESSORS(import_meta, Object)
+
   // Get the ModuleInfo associated with the code.
   inline ModuleInfo* info() const;
 
@@ -119,7 +125,8 @@ class Module : public Struct {
   static const int kDfsAncestorIndexOffset = kDfsIndexOffset + kPointerSize;
   static const int kExceptionOffset = kDfsAncestorIndexOffset + kPointerSize;
   static const int kScriptOffset = kExceptionOffset + kPointerSize;
-  static const int kSize = kScriptOffset + kPointerSize;
+  static const int kImportMetaOffset = kScriptOffset + kPointerSize;
+  static const int kSize = kImportMetaOffset + kPointerSize;
 
  private:
   friend class Factory;

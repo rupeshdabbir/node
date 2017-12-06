@@ -150,15 +150,20 @@
         {"name": "Map-Smi"},
         {"name": "Map-String"},
         {"name": "Map-Object"},
+        {"name": "Map-Object-Set-Get-Large"},
+        {"name": "Map-Double"},
         {"name": "Map-Iteration"},
         {"name": "Map-Iterator"},
         {"name": "Set-Smi"},
         {"name": "Set-String"},
         {"name": "Set-Object"},
+        {"name": "Set-Double"},
         {"name": "Set-Iteration"},
         {"name": "Set-Iterator"},
         {"name": "WeakMap"},
-        {"name": "WeakSet"}
+        {"name": "WeakMap-Constructor"},
+        {"name": "WeakSet"},
+        {"name": "WeakSet-Constructor"}
       ]
     },
     {
@@ -375,7 +380,7 @@
       "main": "run.js",
       "resources": [
         "filter.js", "map.js", "every.js", "join.js", "some.js",
-        "reduce.js", "reduce-right.js", "to-string.js"
+        "reduce.js", "reduce-right.js", "to-string.js", "find.js"
       ],
       "flags": [
         "--allow-natives-syntax"
@@ -417,7 +422,13 @@
         {"name": "SmiToString"},
         {"name": "StringToString"},
         {"name": "SparseSmiToString"},
-        {"name": "SparseStringToString"}
+        {"name": "SparseStringToString"},
+        {"name": "NaiveFindReplacement"},
+        {"name": "DoubleFind"},
+        {"name": "SmiFind"},
+        {"name": "FastFind"},
+        {"name": "GenericFind"},
+        {"name": "OptFastFind"}
       ]
     },
     {
@@ -509,6 +520,7 @@
           "resources": [ "arithmetic.js" ],
           "test_flags": [ "arithmetic" ],
           "results_regexp": "^%s\\-BytecodeHandler\\(Score\\): (.+)$",
+          "timeout": 240,
           "tests": [
             {"name": "Smi-Add"},
             {"name": "Number-Add"},
@@ -602,12 +614,13 @@
       "path": ["Inspector"],
       "main": "run.js",
       "resources": [ "debugger.js", "runtime.js" ],
-      "flags": ["--enable-inspector"],
+      "flags": ["--enable-inspector","--allow-natives-syntax"],
       "results_regexp": "^%s\\-Inspector\\(Score\\): (.+)$",
       "tests": [
         {"name": "Debugger.paused"},
         {"name": "Runtime.evaluate(String16Cstor)"},
-        {"name": "Debugger.getPossibleBreakpoints"}
+        {"name": "Debugger.getPossibleBreakpoints"},
+        {"name": "AsyncStacksInstrumentation"}
       ]
     },
     {

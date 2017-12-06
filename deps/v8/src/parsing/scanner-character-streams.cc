@@ -16,7 +16,7 @@ namespace v8 {
 namespace internal {
 
 namespace {
-const unibrow::uchar kUtf8Bom = 0xfeff;
+const unibrow::uchar kUtf8Bom = 0xFEFF;
 }  // namespace
 
 // ----------------------------------------------------------------------------
@@ -310,7 +310,7 @@ void Utf8ExternalStreamingStream::FillBufferFromCurrentChunk() {
     unibrow::uchar t =
         unibrow::Utf8::ValueOfIncrementalFinish(&current_.pos.incomplete_char);
     if (t != unibrow::Utf8::kBufferEmpty) {
-      DCHECK(t < unibrow::Utf16::kMaxNonSurrogateCharCode);
+      DCHECK_LT(t, unibrow::Utf16::kMaxNonSurrogateCharCode);
       *cursor = static_cast<uc16>(t);
       buffer_end_++;
       current_.pos.chars++;
@@ -347,7 +347,8 @@ void Utf8ExternalStreamingStream::FillBufferFromCurrentChunk() {
 }
 
 bool Utf8ExternalStreamingStream::FetchChunk() {
-  RuntimeCallTimerScope scope(stats_, &RuntimeCallStats::GetMoreDataCallback);
+  RuntimeCallTimerScope scope(stats_,
+                              RuntimeCallCounterId::kGetMoreDataCallback);
   DCHECK_EQ(current_.chunk_no, chunks_.size());
   DCHECK(chunks_.empty() || chunks_.back().length != 0);
 
@@ -491,7 +492,8 @@ size_t FindChunk(Chunks& chunks, ScriptCompiler::ExternalSourceStream* source,
   // Get more data if needed. We usually won't enter the loop body.
   bool out_of_data = !chunks.empty() && chunks.back().byte_length == 0;
   {
-    RuntimeCallTimerScope scope(stats, &RuntimeCallStats::GetMoreDataCallback);
+    RuntimeCallTimerScope scope(stats,
+                                RuntimeCallCounterId::kGetMoreDataCallback);
     while (!out_of_data && end_pos <= position + 1) {
       const uint8_t* chunk = nullptr;
       size_t len = source->GetMoreData(&chunk);
@@ -835,9 +837,9 @@ Utf16CharacterStream* ScannerStream::For(Handle<String> data) {
 
 Utf16CharacterStream* ScannerStream::For(Handle<String> data, int start_pos,
                                          int end_pos) {
-  DCHECK(start_pos >= 0);
-  DCHECK(start_pos <= end_pos);
-  DCHECK(end_pos <= data->length());
+  DCHECK_GE(start_pos, 0);
+  DCHECK_LE(start_pos, end_pos);
+  DCHECK_LE(end_pos, data->length());
   if (data->IsExternalOneByteString()) {
     return new ExternalOneByteStringUtf16CharacterStream(
         Handle<ExternalOneByteString>::cast(data),
